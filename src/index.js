@@ -188,4 +188,4 @@ class OSDAnnotorious {
 //   new OSDAnnotorious(viewer, config); 
 
 export default (viewer, config) => 
-  new OSDAnnotationLayer(viewer, config);
+  new OSDAnnotationLayer({viewer, config});
