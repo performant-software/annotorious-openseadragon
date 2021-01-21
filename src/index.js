@@ -187,8 +187,11 @@ class OSDAnnotorious {
 // export default (viewer, config) =>
 //   new OSDAnnotorious(viewer, config); 
 
-export default (viewer, config) => {
+export default (viewer, config, annos) => {
   const env = createEnvironment();
-  return new OSDAnnotationLayer({viewer, env, config})
+  const annotationLayer = new OSDAnnotationLayer({viewer, env, config})
+  const annotations = annos.map(a => new WebAnnotation(a));
+  annotationLayer.init(annotations.map(a => a.clone()));
+  return annotationLayer
 }
 
