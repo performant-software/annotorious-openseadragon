@@ -10,6 +10,8 @@ import {
   setLocale 
 } from '@recogito/recogito-client-core';
 
+import OSDAnnotationLayer from './OSDAnnotationLayer';
+
 import '@recogito/annotorious/src/ImageAnnotator.scss';
 import '@recogito/recogito-client-core/themes/default';
 
@@ -184,3 +186,6 @@ class OSDAnnotorious {
 
 export default (viewer, config) =>
   new OSDAnnotorious(viewer, config); 
+
+export const OSDAnnoLayer = () => 
+  new OSDAnnotationLayer(viewer, config);
