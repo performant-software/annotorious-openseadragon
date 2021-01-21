@@ -188,7 +188,7 @@ class OSDAnnotorious {
 //   new OSDAnnotorious(viewer, config); 
 
 export default (viewer, config) => {
-  env = createEnvironment();
+  const env = createEnvironment();
   new OSDAnnotationLayer({viewer, env, config})
 }
 
