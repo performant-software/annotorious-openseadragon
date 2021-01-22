@@ -61,10 +61,10 @@
           locale: 'auto'
         });
 
-        anno.setAuthInfo({
-          id: 'http://www.example.com/rainer',
-          displayName: 'rainer'
-        });
+        anno.setZones([ 
+          { id: '#zone1', ulx: 100, uly: 100, lrx: 200, lry: 200 },
+          { id: '#zone2', ulx: 500, uly: 500, lrx: 600, lry: 600 }
+        ])
 
         var toolToggle = document.getElementById('current-tool');
         toolToggle.addEventListener('click', function() {
@@ -88,42 +88,31 @@
           }
         });
 
-        anno.on('createSelection', function(selection) {
-          console.log('selection', selection);
-          const { snippet } = anno.getSelectedImageSnippet();
-          // document.body.appendChild(snippet);
+        var logBtn = document.getElementById('log-zones');
+        logBtn.addEventListener('click', function() {
+          var zones = anno.getZones()
+          console.log("zones: \n"+JSON.stringify(zones))
         });
 
-        anno.on('selectAnnotation', function(annotation) {
-          console.log('selected', annotation);
+        var count = 3
+        var saveBtn = document.getElementById('save');
+        saveBtn.addEventListener('click', function() {
+          anno.save('#zone'+count++)
         });
 
-        anno.on('createAnnotation', function(a) {
-          console.log('created', a);
-          modeBtn.innerHTML = 'MODE: VIEW';
+        var cancelBtn = document.getElementById('cancel');
+        cancelBtn.addEventListener('click', function() {
+          anno.cancel()
         });
 
-        anno.on('cancelSelection', function(a) {
-          modeBtn.innerHTML = 'MODE: VIEW';
+        anno.on('zoneSelected', function(zone) {
+          console.log('zone selected: '+zone.id);
         });
 
-        anno.on('updateAnnotation', function(annotation, previous) {
-          console.log('updated', previous, 'with', annotation);
+        anno.on('zoneSaved', function(zone) {
+          console.log('zone saved: '+zone.id);
         });
 
-        anno.on('deleteAnnotation', function(annotation) {
-          console.log('deleted', annotation);
-        });
-
-        anno.on('mouseEnterAnnotation', function(annotation) {
-          console.log('mouseEnter', annotation);
-        });
-
-        anno.on('mouseLeaveAnnotation', function(annotation) {
-          console.log('mouseLeave', annotation);
-        });
-
-        anno.loadAnnotations('annotations.w3c.json');
       }
     </script>
   <link href="annotorious.min.css" rel="stylesheet"></head>
@@ -137,6 +126,9 @@
       <p>
         <button id="current-tool">TOOL: RECTANGLE</button>
         <button id="mode">MODE: VIEW</button>
+        <button id="log-zones">Log Zones</button>
+        <button id="save">Save</button>
+        <button id="cancel">Cancel</button>
       </p>
       <div id="openseadragon" style="width: 640px; height: 480px;"></div>
     </div>      

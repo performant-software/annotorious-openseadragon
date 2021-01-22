@@ -9,7 +9,7 @@ import {
 import '@recogito/annotorious/src/ImageAnnotator.scss';
 import '@recogito/recogito-client-core/themes/default';
 
-class ZoneLayer {
+class ZoneLayer extends EventEmitter {
 
     constructor(viewer, config) {
         super();
