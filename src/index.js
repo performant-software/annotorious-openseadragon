@@ -8,16 +8,49 @@ import {
 import '@recogito/annotorious/src/ImageAnnotator.scss';
 import '@recogito/recogito-client-core/themes/default';
 
+
+function annotationToZone(anno) {
+    const posStr = anno.target.selector.value
+    const coords = posStr.slice('xywh=pixel:'.length).split(',').map(s => parseFloat(s))
+    return {
+        id: anno.id,
+        ulx: coords[0],
+        uly: coords[1],
+        lrx: coords[2] + coords[0],
+        lty: coords[3] + coords[1]
+    }
+}
+
+function zoneToAnnotation(zone) {
+    return JSON.parse(`{ 
+        "@context": "http://www.w3.org/ns/anno.jsonld",
+        "id": "${zone.id}",
+        "type": "Annotation",
+        "body": [{
+          "type": "TextualBody",
+          "value": "XYZ"
+        }],
+        "target": {
+          "selector": {
+            "type": "FragmentSelector",
+            "conformsTo": "http://www.w3.org/TR/media-frags/",
+            "value": "xywh=pixel:${zone.ulx},${zone.uly},${zone.lrx-zone.ulx},${zone.lry-zone.uly}"
+          }
+        }
+      }`)
+}
+
 export default (viewer, config) => {
     const env = createEnvironment();
     const annotationLayer = new OSDAnnotationLayer({viewer, env, config})
 
     // state variables
-    let selectedAnnotation = null, selectedDOMElement = null
+    let selectedAnnotation = null, selectedDOMElement = null, modifiedTarget = null
 
     const clearState = () => {
         selectedAnnotation = null
         selectedDOMElement = null
+        modifiedTarget = null
     }
 
     annotationLayer.on('select', (evt) => {
@@ -27,30 +60,50 @@ export default (viewer, config) => {
             selectedAnnotation = annotation 
             selectedDOMElement = element 
 
-            if (!annotation.isSelection && !skipEvent) {
-                // TODO emit onZoneSelected
+            if (!skipEvent) {
+                const anno = !selectedAnnotation.isSelection ? selectedAnnotation : selectedAnnotation.toAnnotation()
+                const zone = annotationToZone(anno)
+                annotationLayer.emit('zoneSelected', zone);
             }
         } else {
             clearState();
         }
     })
 
-    annotationLayer.setZones = (annotations) => {
-        const safe = annotations || []; // Allow null for cleaning all current annotations
-        const webannotations = safe.map(a => new WebAnnotation(a));
-        annotationLayer.init(webannotations.map(a => a.clone()));
+    annotationLayer.on('updateTarget', (el, target) => {
+        selectedDOMElement = el
+        modifiedTarget = target
+    })
+
+    annotationLayer.setZones = (zones) => {
+        const annotations = []
+        for( const zone of zones ) {
+            const anno = zoneToAnnotation(zone)
+            annotations.push(new WebAnnotation(anno))
+        }
+        annotationLayer.init(annotations);
         clearState();
     }
 
     annotationLayer.getZones = () => {
-        // TODO
+        const annotations = annotationLayer.getAnnotations()
+        const zones = []
+        for( const annotation of annotations ) {
+            const zone = annotationToZone(annotation.underlying)
+            zones.push(zone)
+        }
+        return zones
     }
 
-    annotationLayer.save = () => {
-        const anno = (selectedAnnotation instanceof WebAnnotation) ? selectedAnnotation.clone() : selectedAnnotation.toAnnotation()
+    annotationLayer.save = (zoneID) => {
+        const previousAnno = !selectedAnnotation.isSelection ? selectedAnnotation : selectedAnnotation.toAnnotation()
+        const nextAnno = (modifiedTarget) ? previousAnno.clone({ target: modifiedTarget }) : previousAnno.clone();
+        nextAnno.underlying.id = zoneID
         clearState();    
         annotationLayer.deselect();
-        annotationLayer.addOrUpdateAnnotation(anno,selectedAnnotation);
+        annotationLayer.addOrUpdateAnnotation(nextAnno, previousAnno);
+        const zone = annotationToZone(nextAnno.underlying)
+        annotationLayer.emit('zoneSaved', zone);
     }
 
     annotationLayer.cancel = () => {
