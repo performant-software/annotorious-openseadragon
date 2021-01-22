@@ -15,14 +15,14 @@ class ZoneLayer extends EventEmitter {
         super();
 
         const env = createEnvironment();
-        this.annotationLayer = new OSDAnnotationLayer({viewer, env, config})
+        this._annotationLayer = new OSDAnnotationLayer({viewer, env, config})
     
         // state variables
         this.selectedAnnotation = null
         this.selectedDOMElement = null
         this.modifiedTarget = null
 
-        this.annotationLayer.on('select', (evt) => {
+        this._annotationLayer.on('select', (evt) => {
             const { annotation, element, skipEvent } = evt;
             if (annotation) {
                 console.log('select')
@@ -39,10 +39,18 @@ class ZoneLayer extends EventEmitter {
             }
         })
     
-        this.annotationLayer.on('updateTarget', (el, target) => {
+        this._annotationLayer.on('updateTarget', (el, target) => {
             this.selectedDOMElement = el
             this.modifiedTarget = target
         })    
+    }
+
+    setDrawingEnabled(enabled) {
+        this._annotationLayer.setDrawingEnabled(enabled)
+    }
+
+    setDrawingTool(tool) {
+        this._annotationLayer.setDrawingTool(tool)
     }
 
     // Clear the current selection.
@@ -59,13 +67,13 @@ class ZoneLayer extends EventEmitter {
             const anno = zoneToAnnotation(zone)
             annotations.push(new WebAnnotation(anno))
         }
-        this.annotationLayer.init(annotations);
+        this._annotationLayer.init(annotations);
         this.clearSelection();
     }
 
     // Get the zones in this layer.
     getZones() {
-        const annotations = this.annotationLayer.getAnnotations()
+        const annotations = this._annotationLayer.getAnnotations()
         const zones = []
         for( const annotation of annotations ) {
             const zone = annotationToZone(annotation.underlying)
@@ -80,8 +88,8 @@ class ZoneLayer extends EventEmitter {
         const nextAnno = (this.modifiedTarget) ? previousAnno.clone({ target: this.modifiedTarget }) : previousAnno.clone();
         if( zoneID ) nextAnno.underlying.id = zoneID
         this.clearSelection();    
-        this.annotationLayer.deselect();
-        this.annotationLayer.addOrUpdateAnnotation(nextAnno, previousAnno);
+        this._annotationLayer.deselect();
+        this._annotationLayer.addOrUpdateAnnotation(nextAnno, previousAnno);
         const zone = annotationToZone(nextAnno.underlying)
         this.emit('zoneSaved', zone);
     }
@@ -89,7 +97,7 @@ class ZoneLayer extends EventEmitter {
     // Deselect the currently selected zone, undoing any changes to it.
     cancel() {
         this.clearSelection();    
-        this.annotationLayer.deselect();
+        this._annotationLayer.deselect();
     }
 }
 
