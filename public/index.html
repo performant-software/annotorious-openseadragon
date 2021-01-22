@@ -61,11 +61,6 @@
           locale: 'auto'
         });
 
-        anno.setAuthInfo({
-          id: 'http://www.example.com/rainer',
-          displayName: 'rainer'
-        });
-
         var toolToggle = document.getElementById('current-tool');
         toolToggle.addEventListener('click', function() {
           if (toolToggle.innerHTML == 'TOOL: RECTANGLE') {
@@ -86,6 +81,16 @@
             modeBtn.innerHTML = 'MODE: VIEW';
             anno.setDrawingEnabled(false);
           }
+        });
+
+        var saveBtn = document.getElementById('save');
+        saveBtn.addEventListener('click', function() {
+          anno.save()
+        });
+
+        var cancelBtn = document.getElementById('cancel');
+        cancelBtn.addEventListener('click', function() {
+          anno.cancel()
         });
 
         anno.on('createSelection', function(selection) {
@@ -123,7 +128,6 @@
           console.log('mouseLeave', annotation);
         });
 
-        anno.loadAnnotations('annotations.w3c.json');
       }
     </script>
   </head>
@@ -137,6 +141,8 @@
       <p>
         <button id="current-tool">TOOL: RECTANGLE</button>
         <button id="mode">MODE: VIEW</button>
+        <button id="save">Save</button>
+        <button id="cancel">Cancel</button>
       </p>
       <div id="openseadragon" style="width: 640px; height: 480px;"></div>
     </div>      
