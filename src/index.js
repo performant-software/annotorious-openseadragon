@@ -32,7 +32,7 @@ class ZoneLayer extends EventEmitter {
                 if (!skipEvent) {
                     const anno = !this.selectedAnnotation.isSelection ? this.selectedAnnotation : this.selectedAnnotation.toAnnotation()
                     const zone = annotationToZone(anno)
-                    this.emit('zoneSelected', zone, selectedDOMElement);
+                    this.emit('zoneSelected', zone, this.selectedDOMElement);
                 }
             } else {
                 this.clearSelection();
