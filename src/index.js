@@ -25,13 +25,20 @@ class ZoneLayer extends EventEmitter {
         this._annotationLayer.on('select', (evt) => {
             const { annotation, element, skipEvent } = evt;
             if (annotation) {
-                console.log('select')
                 this.selectedAnnotation = annotation 
                 this.selectedDOMElement = element 
     
                 if (!skipEvent) {
-                    const anno = !this.selectedAnnotation.isSelection ? this.selectedAnnotation : this.selectedAnnotation.toAnnotation()
-                    const zone = annotationToZone(anno)
+                    let zone
+                    if( this.selectedAnnotation.isSelection ) {
+                        const anno = this.selectedAnnotation.toAnnotation()
+                        zone = annotationToZone(anno)
+                        // zone in progress has ID of null
+                        zone.id = null
+                    } else {
+                        const anno = this.selectedAnnotation 
+                        zone = annotationToZone(anno)
+                    }
                     this.emit('zoneSelected', zone, this.selectedDOMElement);
                 }
             } else {
