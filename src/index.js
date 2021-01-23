@@ -89,16 +89,23 @@ class ZoneLayer extends EventEmitter {
         return zones
     }
 
-    // Save the currently selected zone, optionally overwriting its ID
-    save(zoneID=null) {
+    // Save the currently selected annotation, optionally merging the supplied zone's properties
+    save(zone) {
         const previousAnno = !this.selectedAnnotation.isSelection ? this.selectedAnnotation : this.selectedAnnotation.toAnnotation()
-        const nextAnno = (this.modifiedTarget) ? previousAnno.clone({ target: this.modifiedTarget }) : previousAnno.clone();
-        if( zoneID ) nextAnno.underlying.id = zoneID
+        const cloneProps = this.modifiedTarget ? { target: this.modifiedTarget } : {}
+        if( zone ) {     
+            // copy over properties from zone       
+            cloneProps.id = zone.id
+            cloneProps.body = [{
+                type: "TextualBody",
+                value: zone.note
+            }]
+        } 
+        const nextAnno = previousAnno.clone(cloneProps);
         this.clearSelection();    
         this._annotationLayer.deselect();
-        this._annotationLayer.addOrUpdateAnnotation(nextAnno, previousAnno);
-        const zone = annotationToZone(nextAnno.underlying)
-        this.emit('zoneSaved', zone);
+        this._annotationLayer.removeAnnotation(previousAnno);
+        this._annotationLayer.addAnnotation(nextAnno);
     }
 
     // Deselect the currently selected zone, undoing any changes to it.
@@ -111,12 +118,14 @@ class ZoneLayer extends EventEmitter {
 function annotationToZone(anno) {
     const posStr = anno.target.selector.value
     const coords = posStr.slice('xywh=pixel:'.length).split(',').map(s => parseFloat(s))
+    const note = anno.body[0] ? anno.body[0].value : ""
     return {
         id: anno.id,
         ulx: coords[0],
         uly: coords[1],
         lrx: coords[2] + coords[0],
-        lty: coords[3] + coords[1]
+        lty: coords[3] + coords[1],
+        note
     }
 }
 
@@ -127,7 +136,7 @@ function zoneToAnnotation(zone) {
         "type": "Annotation",
         "body": [{
           "type": "TextualBody",
-          "value": "XYZ"
+          "value": "${zone.note}"
         }],
         "target": {
           "selector": {

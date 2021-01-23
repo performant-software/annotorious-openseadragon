@@ -66,6 +66,9 @@
           { id: '#zone2', ulx: 500, uly: 500, lrx: 600, lry: 600 }
         ])
 
+        // state variable for current selection
+        var selectedZone = null
+
         var toolToggle = document.getElementById('current-tool');
         toolToggle.addEventListener('click', function() {
           if (toolToggle.innerHTML == 'TOOL: RECTANGLE') {
@@ -97,7 +100,8 @@
         var count = 3
         var saveBtn = document.getElementById('save');
         saveBtn.addEventListener('click', function() {
-          anno.save('#zone'+count++)
+          if( selectedZone.id === null ) selectedZone.id = '#zone'+count++
+          anno.save(selectedZone)
         });
 
         var cancelBtn = document.getElementById('cancel');
@@ -107,10 +111,7 @@
 
         anno.on('zoneSelected', function(zone,el) {
           console.log('zone selected: '+zone.id);
-        });
-
-        anno.on('zoneSaved', function(zone) {
-          console.log('zone saved: '+zone.id);
+          selectedZone = zone
         });
 
       }
