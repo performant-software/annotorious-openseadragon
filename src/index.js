@@ -121,6 +121,7 @@ function annotationToZone(anno) {
     const note = anno.body[0] ? anno.body[0].value : ""
     return {
         id: anno.id,
+        n: anno.n,
         ulx: coords[0],
         uly: coords[1],
         lrx: coords[2] + coords[0],
@@ -133,6 +134,7 @@ function zoneToAnnotation(zone) {
     return JSON.parse(`{ 
         "@context": "http://www.w3.org/ns/anno.jsonld",
         "id": "${zone.id}",
+        "n": "${zone.n}",
         "type": "Annotation",
         "body": [{
           "type": "TextualBody",
