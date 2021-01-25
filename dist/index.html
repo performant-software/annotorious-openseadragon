@@ -62,8 +62,8 @@
         });
 
         anno.setZones([ 
-          { id: '#zone1', ulx: 100, uly: 100, lrx: 200, lry: 200 },
-          { id: '#zone2', ulx: 500, uly: 500, lrx: 600, lry: 600 }
+          { id: '#zone1', n:1, ulx: 100, uly: 100, lrx: 200, lry: 200 },
+          { id: '#zone2', n:2, ulx: 500, uly: 500, lrx: 600, lry: 600 }
         ])
 
         // state variable for current selection
@@ -100,8 +100,8 @@
         var count = 3
         var saveBtn = document.getElementById('save');
         saveBtn.addEventListener('click', function() {
-          if( selectedZone.id === null ) selectedZone.id = '#zone'+count++
           anno.save(selectedZone)
+          console.log(anno.getZones())
         });
 
         var cancelBtn = document.getElementById('cancel');
@@ -110,6 +110,10 @@
         });
 
         anno.on('zoneSelected', function(zone,el) {
+          if( zone.id === null ) {
+            zone.n = count++
+            zone.id = '#zone'+zone.n
+          }
           console.log('zone selected: '+zone.id);
           selectedZone = zone
         });

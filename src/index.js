@@ -14,48 +14,52 @@ class ZoneLayer extends EventEmitter {
     constructor(viewer, config) {
         super();
 
-        const env = createEnvironment();
-        this._annotationLayer = new OSDAnnotationLayer({viewer, env, config})
-    
         // state variables
         this.selectedAnnotation = null
         this.selectedDOMElement = null
         this.modifiedTarget = null
-
-        this._annotationLayer.on('select', (evt) => {
-            const { annotation, element, skipEvent } = evt;
-            if (annotation) {
-                this.selectedAnnotation = annotation 
-                this.selectedDOMElement = element 
-    
-                if (!skipEvent) {
-                    let zone
-                    if( this.selectedAnnotation.isSelection ) {
-                        const anno = this.selectedAnnotation.toAnnotation()
-                        zone = annotationToZone(anno)
-                        // zone in progress has ID of null
-                        zone.id = null
-                    } else {
-                        const anno = this.selectedAnnotation 
-                        zone = annotationToZone(anno)
-                    }
-                    this.emit('zoneSelected', zone, this.selectedDOMElement);
-                }
-            } else {
-                this.clearSelection();
-            }
-        })
-    
-        this._annotationLayer.on('updateTarget', (el, target) => {
-            this.selectedDOMElement = el
-            this.modifiedTarget = target
-        })    
+        
+        const env = createEnvironment();
+        this._annotationLayer = new OSDAnnotationLayer({viewer, env, config})
+        this._annotationLayer.on('select', this._onSelect)    
+        this._annotationLayer.on('updateTarget', this._onUpdateTarget)    
     }
 
+    _onUpdateTarget = (el, target) => {
+        this.selectedDOMElement = el
+        this.modifiedTarget = target
+    }
+
+    _onSelect = (evt) => {
+        const { annotation, element, skipEvent } = evt;
+        if (annotation) {
+            this.selectedAnnotation = annotation 
+            this.selectedDOMElement = element 
+
+            if (!skipEvent) {
+                let zone
+                if( this.selectedAnnotation.isSelection ) {
+                    const anno = this.selectedAnnotation.toAnnotation()
+                    zone = annotationToZone(anno)
+                    // zone in progress has ID of null
+                    zone.id = null
+                } else {
+                    const anno = this.selectedAnnotation 
+                    zone = annotationToZone(anno)
+                }
+                this.emit('zoneSelected', zone, this.selectedDOMElement);
+            }
+        } else {
+            this.clearSelection();
+        }
+    }
+
+    // Enable drawing
     setDrawingEnabled(enabled) {
         this._annotationLayer.setDrawingEnabled(enabled)
     }
 
+    // Set drawing tool 'rect' or 'poly'
     setDrawingTool(tool) {
         this._annotationLayer.setDrawingTool(tool)
     }
@@ -91,15 +95,15 @@ class ZoneLayer extends EventEmitter {
 
     // Save the currently selected annotation, optionally merging the supplied zone's properties
     save(zone) {
-        const previousAnno = !this.selectedAnnotation.isSelection ? this.selectedAnnotation : this.selectedAnnotation.toAnnotation()
+        const previousAnno = this.selectedAnnotation.isSelection ? this.selectedAnnotation.toAnnotation() : this.selectedAnnotation
         const cloneProps = this.modifiedTarget ? { target: this.modifiedTarget } : {}
         if( zone ) {     
             // copy over properties from zone       
             cloneProps.id = zone.id
-            cloneProps.body = [{
-                type: "TextualBody",
-                value: zone.note
-            }]
+            cloneProps.body = [
+                { type: "TextualBody", value: zone.note },
+                { type: "TextualBody", value: zone.n.toString() }
+            ]
         } 
         const nextAnno = previousAnno.clone(cloneProps);
         this.clearSelection();    
@@ -119,13 +123,14 @@ function annotationToZone(anno) {
     const posStr = anno.target.selector.value
     const coords = posStr.slice('xywh=pixel:'.length).split(',').map(s => parseFloat(s))
     const note = anno.body[0] ? anno.body[0].value : ""
+    const n = anno.body[1] ? parseInt(anno.body[1].value) : null
     return {
         id: anno.id,
-        n: anno.n,
+        n,
         ulx: coords[0],
         uly: coords[1],
         lrx: coords[2] + coords[0],
-        lty: coords[3] + coords[1],
+        lry: coords[3] + coords[1],
         note
     }
 }
@@ -134,11 +139,14 @@ function zoneToAnnotation(zone) {
     return JSON.parse(`{ 
         "@context": "http://www.w3.org/ns/anno.jsonld",
         "id": "${zone.id}",
-        "n": "${zone.n}",
         "type": "Annotation",
         "body": [{
           "type": "TextualBody",
           "value": "${zone.note}"
+        },
+        {
+            "type": "TextualBody",
+            "value": "${zone.n}"
         }],
         "target": {
           "selector": {
