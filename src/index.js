@@ -59,7 +59,7 @@ class ZoneLayer extends EventEmitter {
         this._annotationLayer.setDrawingEnabled(enabled)
     }
 
-    // Set drawing tool 'rect' or 'poly'
+    // Set drawing tool 'rect' or 'polygon'
     setDrawingTool(tool) {
         this._annotationLayer.setDrawingTool(tool)
     }
@@ -120,42 +120,56 @@ class ZoneLayer extends EventEmitter {
 }
 
 function annotationToZone(anno) {
-    const posStr = anno.target.selector.value
-    const coords = posStr.slice('xywh=pixel:'.length).split(',').map(s => parseFloat(s))
     const note = anno.body[0] ? anno.body[0].value : ""
     const n = anno.body[1] ? parseInt(anno.body[1].value) : null
-    return {
-        id: anno.id,
-        n,
-        ulx: coords[0],
-        uly: coords[1],
-        lrx: coords[2] + coords[0],
-        lry: coords[3] + coords[1],
-        note
+    const zone = { id: anno.id, n, note }
+
+    const posStr = anno.target.selector.value
+    const polygonPrefix='<svg><polygon points="'
+
+    // can be a polygon or a rectangle
+    if( posStr.startsWith(polygonPrefix) ) {
+        const polygonSuffix='"></polygon></svg>'
+        zone.points = posStr.slice(polygonPrefix.length,-polygonSuffix.length)
+    } else {
+        const coords = posStr.slice('xywh=pixel:'.length).split(',').map(s => parseFloat(s))
+        zone.ulx = coords[0]
+        zone.uly = coords[1]
+        zone.lrx = coords[2] + coords[0]
+        zone.lry = coords[3] + coords[1]
     }
+    return zone
 }
 
 function zoneToAnnotation(zone) {
-    return JSON.parse(`{ 
-        "@context": "http://www.w3.org/ns/anno.jsonld",
-        "id": "${zone.id}",
-        "type": "Annotation",
-        "body": [{
-          "type": "TextualBody",
-          "value": "${zone.note}"
+
+    let selector = {}
+    if( zone.points ) {
+        selector.type = "SvgSelector"
+        selector.value =`<svg><polygon points="${zone.points}"></polygon></svg>`
+    } else {
+        selector.type = "FragmentSelector"
+        selector.conformsTo = "http://www.w3.org/TR/media-frags/"
+        selector.value =`xywh=pixel:${zone.ulx},${zone.uly},${zone.lrx-zone.ulx},${zone.lry-zone.uly}`
+    }
+
+    const anno = { 
+        id: zone.id,
+        type: "Annotation",
+        body: [{
+            type: "TextualBody",
+            value: zone.note
         },
         {
-            "type": "TextualBody",
-            "value": "${zone.n}"
+            type: "TextualBody",
+            value: zone.n.toString()
         }],
-        "target": {
-          "selector": {
-            "type": "FragmentSelector",
-            "conformsTo": "http://www.w3.org/TR/media-frags/",
-            "value": "xywh=pixel:${zone.ulx},${zone.uly},${zone.lrx-zone.ulx},${zone.lry-zone.uly}"
-          }
+        target: {
+          selector: selector
         }
-      }`)
+      }
+    anno["@context"] = "http://www.w3.org/ns/anno.jsonld"
+    return anno
 }
 
 export default (viewer, config) =>
