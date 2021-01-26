@@ -109,6 +109,12 @@
           anno.cancel()
         });
 
+        var deleteBtn = document.getElementById('delete');
+        deleteBtn.addEventListener('click', function() {
+          anno.removeSelectedZone()
+          console.log(anno.getZones())
+        });
+
         anno.on('zoneSelected', function(zone,el) {
           if( zone.id === null ) {
             zone.n = count++
@@ -134,6 +140,7 @@
         <button id="log-zones">Log Zones</button>
         <button id="save">Save</button>
         <button id="cancel">Cancel</button>
+        <button id="delete">Delete</button>
       </p>
       <div id="openseadragon" style="width: 640px; height: 480px;"></div>
     </div>      

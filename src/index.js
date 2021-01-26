@@ -93,6 +93,11 @@ class ZoneLayer extends EventEmitter {
         return zones
     }
 
+    removeSelectedZone() {
+        const {annotation} = this._annotationLayer.selectedShape
+        this._annotationLayer.removeAnnotation(annotation);
+    }
+
     // Save the currently selected annotation, optionally merging the supplied zone's properties
     save(zone) {
         const previousAnno = this.selectedAnnotation.isSelection ? this.selectedAnnotation.toAnnotation() : this.selectedAnnotation
