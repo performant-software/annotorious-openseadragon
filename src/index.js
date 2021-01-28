@@ -106,8 +106,7 @@ class ZoneLayer extends EventEmitter {
             // copy over properties from zone       
             cloneProps.id = zone.id
             cloneProps.body = [
-                { type: "TextualBody", value: zone.note },
-                { type: "TextualBody", value: zone.n.toString() }
+                { type: "TextualBody", value: zone.note }
             ]
         } 
         const nextAnno = previousAnno.clone(cloneProps);
@@ -126,8 +125,7 @@ class ZoneLayer extends EventEmitter {
 
 function annotationToZone(anno) {
     const note = anno.body[0] ? anno.body[0].value : ""
-    const n = anno.body[1] ? parseInt(anno.body[1].value) : null
-    const zone = { id: anno.id, n, note }
+    const zone = { id: anno.id, note }
 
     const posStr = anno.target.selector.value
     const polygonPrefix='<svg><polygon points="'
@@ -147,7 +145,6 @@ function annotationToZone(anno) {
 }
 
 function zoneToAnnotation(zone) {
-
     let selector = {}
     if( zone.points ) {
         selector.type = "SvgSelector"
@@ -164,10 +161,6 @@ function zoneToAnnotation(zone) {
         body: [{
             type: "TextualBody",
             value: zone.note
-        },
-        {
-            type: "TextualBody",
-            value: zone.n.toString()
         }],
         target: {
           selector: selector
