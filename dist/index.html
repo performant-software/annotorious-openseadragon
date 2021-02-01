@@ -42,6 +42,13 @@
       .a9s-selection-mask {
         fill:rgba(0,0,0,0.6) !important;
       }
+
+      .a9s-annotation.highlight .a9s-inner,
+      .a9s-annotation.highlight .a9s-outer {
+        stroke-width:4;
+        stroke:yellow;
+      }
+
     </style>
     <script>
       window.onload = function() {
@@ -65,6 +72,9 @@
           { id: '#zone1', ulx: 100, uly: 100, lrx: 200, lry: 200, note: "zone1" },
           { id: '#zone2', points: "828.5213623046875,316.6221618652344 818.7078857421875,306.1443786621094 558.3162231445312,215.26406860351562 386.453125,433.359375 734.453125,509.359375 858.453125,433.359375", note: "zone2" }
         ])
+
+        // test highlighting
+        anno.setHighlights('#zone1')
 
         // state variable for current selection
         var selectedZone = null

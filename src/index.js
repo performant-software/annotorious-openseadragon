@@ -98,6 +98,20 @@ class ZoneLayer extends EventEmitter {
         this._annotationLayer.removeAnnotation(annotation);
     }
 
+    setHighlights(zoneIDs) {
+        // iterate through all the shapes and highlight or unhighlight
+        const g = this._annotationLayer.g
+        const shapes = Array.from(g.querySelectorAll('.a9s-annotation'));
+        for( const shape of shapes ) {
+            const shapeID = shape.getAttribute('data-id')
+            if( zoneIDs.includes(shapeID) ) {
+                shape.classList.add('highlight')
+            } else {
+                shape.classList.remove('highlight')
+            }
+        }
+    }
+
     // Save the currently selected annotation, optionally merging the supplied zone's properties
     save(zone) {
         const previousAnno = this.selectedAnnotation.isSelection ? this.selectedAnnotation.toAnnotation() : this.selectedAnnotation
