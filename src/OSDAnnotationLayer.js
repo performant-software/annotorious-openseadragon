@@ -17,6 +17,7 @@ export default class OSDAnnotationLayer extends EventEmitter {
     this.svg.setAttribute('class', 'a9s-annotationlayer', 'a9s-osd-annotationlayer');
 
     this.g = document.createElementNS(SVG_NAMESPACE, 'g');
+    this.g.setAttribute('id', 'selection-group');
     this.svg.appendChild(this.g);
 
     this.viewer.canvas.appendChild(this.svg);
@@ -25,10 +26,10 @@ export default class OSDAnnotationLayer extends EventEmitter {
     this.viewer.addHandler('rotate', () => this.resize());
     this.viewer.addHandler('resize', () => this.resize());
 
-    this.viewer.addHandler('open', () => { 
+    this.viewer.addHandler('open', () => {
       // Store image properties to environment
       const { x, y } = this.viewer.world.getItemAt(0).source.dimensions;
-      
+
       props.env.image = {
         src: this.viewer.world.getItemAt(0).source['@id'],
         naturalWidth: x,
@@ -51,7 +52,7 @@ export default class OSDAnnotationLayer extends EventEmitter {
     this.mouseTracker = new OpenSeadragon.MouseTracker({
       element: this.svg,
 
-      pressHandler:  evt =>
+      pressHandler: evt =>
         this.tools.current.startDrawing(evt.originalEvent),
 
       moveHandler: evt => {
@@ -63,7 +64,7 @@ export default class OSDAnnotationLayer extends EventEmitter {
         this.tools.current.onMouseUp(evt.originalEvent)
     }).setTracking(false);
 
-    this.tools.on('complete', shape => { 
+    this.tools.on('complete', shape => {
       this.mouseTracker.setTracking(false);
       this.selectShape(shape);
       this.emit('createSelection', shape.annotation);
@@ -110,7 +111,7 @@ export default class OSDAnnotationLayer extends EventEmitter {
   addOrUpdateAnnotation = (annotation, previous) => {
     if (this.selectedShape?.annotation === annotation || this.selectShape?.annotation == previous)
       this.deselect();
-  
+
     if (previous)
       this.removeAnnotation(annotation);
 
@@ -140,7 +141,7 @@ export default class OSDAnnotationLayer extends EventEmitter {
         if (!annotation.isSelection)
           this.addAnnotation(annotation);
       }
-      
+
       this.selectedShape = null;
     }
   }
@@ -159,11 +160,11 @@ export default class OSDAnnotationLayer extends EventEmitter {
   fitBounds = (annotationOrId, immediately) => {
     const shape = this.findShape(annotationOrId);
     if (shape) {
-      const { x, y, w, h } = parseRectFragment(shape.annotation);      
+      const { x, y, w, h } = parseRectFragment(shape.annotation);
       const rect = this.viewer.viewport.imageToViewportRectangle(x, y, w, h);
-      
+
       this.viewer.viewport.fitBounds(rect, immediately);
-    }    
+    }
   }
 
   getAnnotations = () => {
@@ -200,7 +201,7 @@ export default class OSDAnnotationLayer extends EventEmitter {
     // Update annotation
     const { annotation } = shape;
 
-    const updated = annotation.clone({ id : forcedId });
+    const updated = annotation.clone({ id: forcedId });
     shape.annotation = updated;
 
     return updated;
@@ -216,9 +217,9 @@ export default class OSDAnnotationLayer extends EventEmitter {
       const center = this.viewer.viewport.windowToViewportCoordinates(new OpenSeadragon.Point(x, y));
 
       this.viewer.viewport.panTo(center, immediately);
-    }    
+    }
   }
-  
+
   removeAnnotation = annotation => {
     if (this.selectedShape?.annotation === annotation)
       this.deselect();
@@ -242,11 +243,11 @@ export default class OSDAnnotationLayer extends EventEmitter {
         this.selectedShape.scaleHandles(1 / scale);
         this.emit('moveSelection', this.selectedShape.element);
       } else {
-        this.emit('moveSelection', this.selectedShape); 
-      }       
+        this.emit('moveSelection', this.selectedShape);
+      }
     }
   }
-  
+
   selectAnnotation = annotationOrId => {
     if (this.selectedShape)
       this.deselect();
@@ -277,15 +278,15 @@ export default class OSDAnnotationLayer extends EventEmitter {
 
     if (!(readOnly || this.headless)) {
       const toolForShape = this.tools.forShape(shape);
-      
+
       if (toolForShape?.supportsModify) {
         // Replace the shape with an editable version
-        shape.parentNode.removeChild(shape);  
+        shape.parentNode.removeChild(shape);
 
         this.selectedShape = toolForShape.createEditableShape(annotation);
         this.selectedShape.scaleHandles(1 / this.currentScale());
 
-        this.selectedShape.element.annotation = annotation;        
+        this.selectedShape.element.annotation = annotation;
 
         // Disable normal OSD nav
         const editableShapeMouseTracker = new OpenSeadragon.MouseTracker({
@@ -295,23 +296,23 @@ export default class OSDAnnotationLayer extends EventEmitter {
         // En-/disable OSD nav based on hover status
         this.selectedShape.element.addEventListener('mouseenter', evt =>
           editableShapeMouseTracker.setTracking(true));
-    
+
         this.selectedShape.element.addEventListener('mouseleave', evt =>
           editableShapeMouseTracker.setTracking(false));
-        
+
         this.selectedShape.mouseTracker = editableShapeMouseTracker;
-    
+
         this.selectedShape.on('update', fragment =>
           this.emit('updateTarget', this.selectedShape.element, fragment));
 
         this.emit('select', { annotation, element: this.selectedShape.element, skipEvent });
       } else {
         this.selectedShape = shape;
-        this.emit('select', { annotation, element: shape, skipEvent });     
+        this.emit('select', { annotation, element: shape, skipEvent });
       }
     } else {
       this.selectedShape = shape;
-      this.emit('select', { annotation, element: shape, skipEvent });   
+      this.emit('select', { annotation, element: shape, skipEvent });
     }
   }
 
