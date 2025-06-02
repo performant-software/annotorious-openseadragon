@@ -121,7 +121,8 @@ class ZoneLayer extends EventEmitter {
             cloneProps.id = zone.id
             cloneProps.ana = zone.ana
             cloneProps.body = [
-                { type: "TextualBody", value: zone.note }
+                { type: "TextualBody", value: zone.note },
+                { type: "TextualBody", value: zone.ana }
             ]
         }
         const nextAnno = previousAnno.clone(cloneProps);
